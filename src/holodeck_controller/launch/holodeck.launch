@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+
+<launch>
+
+	<node pkg="holodeck_controller" type="controller_node" name = "controller_node" output = "screen" />
+
+	<node pkg="joy" type="joy_node" name="joy_node" output = "screen" >
+		<remap from="joy" to="holodeck/joy"/>
+		<param name="autorepeat_rate" value="30"/>
+	</node>
+
+	<node pkg="ros_holodeck" type="ros_holodeck_node" name ="ros_holodeck_node" output="screen"/>
+
+	<node pkg="rvm" type="frontend_node" name="frontend_node">
+		<param name="publish_video" value="true"/>
+		<param name="use_cv_imShow" value ="false"/>
+		<param name="camera_fps" value="false"/>
+		<param name="use_webcam" value="false"/>
+		<param name="record_video" value="false"/>
+		<remap from="video" to="holodeck/image" />
+	</node>
+
+
+
+
+		<node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" />
+		
+
+	 	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="dynamic_reconfigure" />
+
+
+
+
+</launch>
