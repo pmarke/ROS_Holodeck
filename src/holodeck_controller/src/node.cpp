@@ -1,11 +1,11 @@
-#include "holodeck_controller/controller.h"
+#include "holodeck_controller/frontend.h"
 
 int main(int argc, char** argv){
 	// start node
-	ros::init(argc, argv, "ros_holodeck_node");
+	ros::init(argc, argv, "holodeck_controller_node");
 
 
-	holodeck::Controller controller;
+	holodeck::Frontend frontend;
 
 
 	ros::spin();

@@ -54,6 +54,7 @@
   <exec_depend>roscpp</exec_depend>
 
   <build_depend>ros_holodeck</build_depend>
+  <exec_depend>ros_holodeck</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

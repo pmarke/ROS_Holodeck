@@ -11,7 +11,14 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   ros_holodeck
+  sensor_msgs
+  cv_bridge
+  image_transport
 )
+
+find_package(Eigen3 REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(Curses REQUIRED)
 
 ## System dependencies are found with CMake's conventions
 # find_package(Boost REQUIRED COMPONENTS system)
@@ -105,7 +112,7 @@ find_package(catkin REQUIRED COMPONENTS
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES holodeck_controller
-#  CATKIN_DEPENDS roscpp
+ CATKIN_DEPENDS ros_holodeck
 #  DEPENDS system_lib
 )
 
@@ -118,13 +125,20 @@ catkin_package(
 include_directories(
 include
   ${catkin_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIR}
+  ${OpenCV_INCLUDE_DIRS}
+  ${CURSES_INCLUDE_DIR}
 )
 
 add_executable(controller_node
 	src/node.cpp 
-	src/controller.cpp)
+	src/frontend.cpp
+  src/controller_manager/controller_OptFlow.cpp)
 
-target_link_libraries( controller_node ${catkin_LIBRARIES})
+target_link_libraries( controller_node 
+	${catkin_LIBRARIES} 
+	${OpenCV_LIBRARIES}
+	${CURSES_LIBRARIES})
 
 add_dependencies(controller_node ${catkin_EXPORTED_TARGETS} )
 

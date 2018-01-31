@@ -11,7 +11,7 @@ ROSHolodeck::ROSHolodeck() {
 	command_sub_ = nh_.subscribe("command", 10, &ROSHolodeck::command_callback, this);
 
 	// state publisher
-	state_pub_ = nh_.advertise<ros_holodeck::state>("state",10);
+	state_srv_ = nh_.advertiseService("state",&ROSHolodeck::service_state,this);
 
 	// image publisher
 	image_transport::ImageTransport it(nh_);
@@ -32,7 +32,7 @@ void ROSHolodeck::command_callback(const ros_holodeck::command& msg) {
 		holodeck.reset();
 
 	// take a step in the world. ts = 1/30 (s)
-	holodeck.step(-msg.roll, msg.pitch, -msg.altitude, msg.yaw_rate);
+	holodeck.step(msg.roll, msg.pitch, msg.altitude, msg.yaw_rate);
 
 	// get states and image
 	holodeck.get_orientation_sensor_data(rotation_matrix_);
@@ -43,7 +43,6 @@ void ROSHolodeck::command_callback(const ros_holodeck::command& msg) {
 
 
 	// publish state and video information
-	publish_state();
 
 	publish_video(); 
 
@@ -53,7 +52,7 @@ void ROSHolodeck::command_callback(const ros_holodeck::command& msg) {
 
 
 
-void ROSHolodeck::publish_state() {
+bool ROSHolodeck::service_state(ros_holodeck::state_srv::Request& req, ros_holodeck::state_srv::Response& res) {
 
 	///
 	// pack state information into ros msg
@@ -84,9 +83,10 @@ void ROSHolodeck::publish_state() {
 	// time
 	state_.header.stamp = ros::Time::now();
 
+	res.state = state_;
 
 	// publish state information
-	state_pub_.publish(state_);
+	return true;
 
 }
 

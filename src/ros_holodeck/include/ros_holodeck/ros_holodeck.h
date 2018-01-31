@@ -6,6 +6,7 @@
 #include <image_transport/image_transport.h>
 #include <sensor_msgs/image_encodings.h>
 #include <ros_holodeck/state.h>
+#include <ros_holodeck/state_srv.h>
 #include <ros_holodeck/command.h>
 
 
@@ -25,7 +26,7 @@ namespace holodeck {
 
         // ros communication
         ros::Subscriber command_sub_;
-        ros::Publisher state_pub_;
+        ros::ServiceServer state_srv_;
         image_transport::Publisher pub_video_;
 
         // name of the Holodeck environment
@@ -50,7 +51,7 @@ namespace holodeck {
         void command_callback(const ros_holodeck::command& msg);
 
         // publish states: location, veclocity, imu, and rotation matrix
-        void publish_state();
+        bool service_state(ros_holodeck::state_srv::Request& req, ros_holodeck::state_srv::Response& res);
 
         // publish camera image captured by the Holodeck Agent
         void publish_video();
