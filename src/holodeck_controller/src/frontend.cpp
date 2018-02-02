@@ -16,6 +16,23 @@ namespace holodeck {
 
 		controller_base_ = std::make_shared<ControllerOptFlow>();
 
+		// rqt_reconfigure
+		auto f = std::bind(&Frontend::rqt_reconfigure_callback, this, std::placeholders::_1, std::placeholders::_2);
+		server_.setCallback(f);
+
+
+		// initial values;
+		Vx.c = 0;
+		Vx.prev = 0;
+
+		Vy.c = 0;
+		Vy.prev = 0;
+
+		Vyaw.c = 0;
+		Vyaw.prev = 0;
+		yaw_stop_ = 0;
+
+
 		keyboard_input();
 
 	}
@@ -53,7 +70,19 @@ namespace holodeck {
 
 	void Frontend::publish_command() {
 
-		command_pub_.publish(command_);
+		// implement controller
+		pd_controller();
+
+		// change coordinate frame
+		ros_holodeck::command command;
+
+		command.yaw_rate = -command_.yaw_rate;
+		command.roll = 0;//-command_.roll;
+		command.altitude = command_.altitude;
+		command.pitch = command_.pitch;
+		command.reset = command_.reset;
+
+		command_pub_.publish(command);
 
 	}
 
@@ -62,6 +91,12 @@ namespace holodeck {
 		if (srv_state_.call(state_srv_)) {
 
 			state_ = state_srv_.response.state;
+
+			std::cout << "yaw:  " << state_.yaw << std::endl;
+			std::cout << "command yaw_rate c: " << command_.yaw_rate << std::endl;
+			std::cout << "Vyaw.c: " << Vyaw.c << std::endl;
+			std::cout << "yaw_stop_: " << yaw_stop_ << std::endl;
+			
 		}
 		else
 		{
@@ -95,12 +130,16 @@ namespace holodeck {
 
 
 		  int key_pressed;
-		  if((key_pressed=getch())==ERR){
+		  while ( (key_pressed=getch()) != ERR ) {
 		    // user hasn't responded. do nothing
-		  }
-		  else{
+
+		  	// std::cout << key_pressed << std::endl;
+
 		    handle_key_input(key_pressed);
 		  }
+		  
+		    
+		  
 
 
 		  ros::spinOnce();
@@ -118,23 +157,23 @@ namespace holodeck {
 
 			case key_w: { // increase altitude
 
-				command_.altitude += 1;
+				command_.altitude += 1.0/30;
 
 				break;
 			}
 			case key_a: {// yaw rate left
 
-				command_.yaw_rate -= 0.1;
+				Vyaw.c -= 0.1;
 
-				if (command_.yaw_rate < -1)
-					command_.yaw_rate = -1;
+				if (Vyaw.c < -1)
+					Vyaw.c = -1;
 
 
 				break;
 			}
 			case key_s: { // decrease altitude
 
-				command_.altitude -= 1;
+				command_.altitude -= 1.0/30;
 
 				if (command_.altitude < 0)
 					command_.altitude = 0;
@@ -143,10 +182,10 @@ namespace holodeck {
 			}
 			case key_d: { // yaw_rate right
 
-				command_.yaw_rate += 0.1;
+				Vyaw.c += 0.1;
 
-				if (command_.yaw_rate > 1)
-					command_.yaw_rate = 1;
+				if (Vyaw.c > 1)
+					Vyaw.c = 1;
 
 				break;
 			}
@@ -154,6 +193,9 @@ namespace holodeck {
 
 				command_.reset = true;
 				command_.altitude = 0;
+				Vx.c = 0;
+				Vy.c = 0;
+				Vyaw.c = 0;
 
 				break;
 			}
@@ -165,45 +207,45 @@ namespace holodeck {
 			}
 			case key_arrow_up: { // pitch up
 
-				command_.pitch += 0.1;
+				Vx.c += 0.1;
 
-				if (command_.pitch > 0.7)
-					command_.pitch = 0.7;
+				if (Vx.c > 5)
+					Vx.c = 5;
 
 				break;
 			}
 			case key_arrow_down: { // pitch down
 
-				command_.pitch -= 0.1;
+				Vx.c -= 0.1;
 
-				if (command_.pitch < -0.4)
-					command_.pitch = -0.4;
+				if (Vx.c < -5)
+					Vx.c = -5;
 
 				break;
 			}
 			case key_arrow_left: { // roll left
 
-				command_.roll -= 0.1;
+				Vy.c -= 0.1;
 
-				if (command_.roll < -0.4)
-					command_.roll = -0.4;
+				if (Vy.c < -5)
+					Vy.c = -5;
 
 				break;
 			}
 			case key_arrow_right: { // roll right
 
-				command_.roll += 0.1;
+				Vy.c += 0.1;
 
-				if (command_.roll > 0.4)
-					command_.roll = 0.4;
+				if (Vy.c > 5)
+					Vy.c = 5;
 
 				break;
 			}
 			case key_space: {  // reset commands to 0
 
-				command_.pitch = 0;
-				command_.roll = 0;
-				command_.yaw_rate = 0;
+				Vx.c = 0;
+				Vy.c = 0;
+				Vyaw.c = 0;
 
 				break;
 			}
@@ -223,6 +265,55 @@ namespace holodeck {
 			publish_command();
 
 	}
+
+void Frontend::pd_controller() {
+
+
+	// calculate derivatives
+	Vx.dl = (state_.vel.x - Vx.prev) * frame_rate;
+	Vy.dl = (state_.vel.y - Vy.prev) * frame_rate;
+
+	// compute commands
+	command_.pitch = Vx.kp*(Vx.c - state_.vel.x) - Vx.dl*Vx.kd;
+
+	command_.roll = Vy.kp*(Vy.c-state_.vel.y) -Vy.dl*Vy.kd;
+
+	if (Vyaw.c == 0 && Vyaw.dl != 0) {
+		yaw_stop_ = state_.yaw;
+	}
+
+	if (Vyaw.c == 0) {
+
+		command_.yaw_rate = Vyaw.kp*(yaw_stop_ - state_.yaw) - Vyaw.dl*Vyaw.kd;
+
+	}
+	else
+		command_.yaw_rate = Vyaw.c;
+
+	// store previous value
+	Vx.prev = state_.vel.x;
+	Vy.prev = state_.vel.y;
+	Vyaw.dl = Vyaw.c;
+
+
+}
+
+
+void Frontend::rqt_reconfigure_callback(holodeck_controller::frontend &config, uint32_t level) {
+
+	// update gains
+	Vx.kp = config.pitch_kp;
+	Vx.kd = config.pitch_kd;
+
+	Vy.kp = config.roll_kp;
+	Vy.kd = config.roll_kd;
+
+	Vyaw.kp = config.yaw_kp;
+	Vyaw.kd = config.yaw_kd;
+
+
+}
+
 
 
 

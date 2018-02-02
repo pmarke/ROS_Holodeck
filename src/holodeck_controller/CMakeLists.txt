@@ -14,6 +14,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   image_transport
+  dynamic_reconfigure
 )
 
 find_package(Eigen3 REQUIRED)
@@ -95,10 +96,10 @@ find_package(Curses REQUIRED)
 ##     and list every .cfg file to be processed
 
 ## Generate dynamic reconfigure parameters in the 'cfg' folder
-# generate_dynamic_reconfigure_options(
-#   cfg/DynReconf1.cfg
+generate_dynamic_reconfigure_options(
+  cfg/holodeckConfigure.cfg
 #   cfg/DynReconf2.cfg
-# )
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -140,7 +141,7 @@ target_link_libraries( controller_node
 	${OpenCV_LIBRARIES}
 	${CURSES_LIBRARIES})
 
-add_dependencies(controller_node ${catkin_EXPORTED_TARGETS} )
+add_dependencies(controller_node ${catkin_EXPORTED_TARGETS} ${PROJECT_NAME}_gencfg)
 
 ## Declare a C++ library
 # add_library(${PROJECT_NAME}

@@ -56,6 +56,9 @@
   <build_depend>ros_holodeck</build_depend>
   <exec_depend>ros_holodeck</exec_depend>
 
+  <build_depend>dynamic_reconfigure</build_depend>
+  <exec_depend>dynamic_reconfigure</exec_depend>
+
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

@@ -14,6 +14,7 @@
 #include <holodeck_cpp_bindings/holodeck.h>
 #include <string>
 #include <Eigen/Dense>
+#include <math.h>
 
 namespace holodeck {
 

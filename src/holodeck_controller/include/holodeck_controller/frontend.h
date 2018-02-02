@@ -11,6 +11,9 @@
 #include <ros_holodeck/state.h>
 #include <ros_holodeck/command.h>
 
+// rqt_reconfigure
+#include <holodeck_controller/frontend.h>
+
 // This project
 #include "holodeck_controller/controller_manager/controller_OptFlow.h"
 #include "holodeck_controller/controller_manager/controller_base.h"
@@ -40,6 +43,9 @@ namespace holodeck {
 	static const int key_arrow_left = 260;
 	static const int key_arrow_right = 261;
 
+// frame rate
+	static const float frame_rate = 30;
+
 
 
 	// This class sends commands to the ROS_Holodeck interface and receives
@@ -63,10 +69,25 @@ namespace holodeck {
 		ros_holodeck::state_srv state_srv_;
 		ros_holodeck::command command_;
 
+		// dynamic reconfigure
+		dynamic_reconfigure::Server<rvm::filterManagerConfig> server_;
+
+
 		// Frames
 		cv::Mat img_;
 		cv::Mat grayImg_;
 		cv::Mat alteredImg_;
+
+		// PD controller
+		struct PD_Controller {
+			float kp;    // proportional gain
+			float kd;    // derivative gain
+			float c;     // command
+			float prev;  // previous value
+			float dl;    // derivative
+		} Vx, Vy, Vyaw;
+
+		float yaw_stop_; // yaw angle when yaw_rate was last zero 
 
 		// If true, control using the keyboard
 		bool use_keyboard_ = true;
@@ -92,6 +113,12 @@ namespace holodeck {
 		void keyboard_input();
 
 		void handle_key_input(int key_pressed);
+
+		// PD velocity controller. 
+		// Calculates desired roll, pitch, and yaw_rate
+		void pd_controller();
+
+		void rqt_reconfigure_callback(holodeck_controller::frontend &config, uint32_t level);
 
 	} ;
 
