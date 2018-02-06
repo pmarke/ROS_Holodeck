@@ -5,6 +5,7 @@
 #include <vector>
 #include <ros_holodeck/state.h>
 #include <ros_holodeck/command.h>
+#include <stdlib.h> 
 
 
 namespace holodeck {
@@ -15,7 +16,7 @@ namespace holodeck {
 	public:
 
 		//This method receives an image and states, and computes commands
-		virtual void implement_controller(const cv::Mat& img, const ros_holodeck::state state, ros_holodeck::command& command ) = 0;
+		virtual void implement_controller(const cv::Mat& img, const ros_holodeck::state state, float *command) = 0;
 	
 
 	

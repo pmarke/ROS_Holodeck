@@ -12,7 +12,8 @@
 #include <ros_holodeck/command.h>
 
 // rqt_reconfigure
-#include <holodeck_controller/frontend.h>
+#include <holodeck_controller/frontendConfig.h>
+#include <dynamic_reconfigure/server.h>
 
 // This project
 #include "holodeck_controller/controller_manager/controller_OptFlow.h"
@@ -43,6 +44,8 @@ namespace holodeck {
 	static const int key_arrow_left = 260;
 	static const int key_arrow_right = 261;
 
+	static const float PI = 3.14159;
+
 // frame rate
 	static const float frame_rate = 30;
 
@@ -70,7 +73,7 @@ namespace holodeck {
 		ros_holodeck::command command_;
 
 		// dynamic reconfigure
-		dynamic_reconfigure::Server<rvm::filterManagerConfig> server_;
+		dynamic_reconfigure::Server<holodeck_controller::frontendConfig> server_;
 
 
 		// Frames
@@ -118,7 +121,8 @@ namespace holodeck {
 		// Calculates desired roll, pitch, and yaw_rate
 		void pd_controller();
 
-		void rqt_reconfigure_callback(holodeck_controller::frontend &config, uint32_t level);
+		// Update PD gains
+		void rqt_reconfigure_callback(holodeck_controller::frontendConfig &config, uint32_t level);
 
 	} ;
 

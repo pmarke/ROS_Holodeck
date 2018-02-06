@@ -57,11 +57,9 @@ namespace holodeck {
 		if (!use_keyboard_) {
 
 			// Implement extensions
-			implement_extensions();
+			// implement_extensions();
 
-			command_.yaw_rate = 0;
-			command_.pitch = 0;
-			command_.roll = 0;
+			// publish commands
 			publish_command();
 		}
 
@@ -77,7 +75,7 @@ namespace holodeck {
 		ros_holodeck::command command;
 
 		command.yaw_rate = -command_.yaw_rate;
-		command.roll = 0;//-command_.roll;
+		command.roll = -command_.roll;
 		command.altitude = command_.altitude;
 		command.pitch = command_.pitch;
 		command.reset = command_.reset;
@@ -88,18 +86,15 @@ namespace holodeck {
 
 	void Frontend::service_state() {
 
+		// Try to reach the server. 
 		if (srv_state_.call(state_srv_)) {
 
+			// Get the states from the server
 			state_ = state_srv_.response.state;
-
-			std::cout << "yaw:  " << state_.yaw << std::endl;
-			std::cout << "command yaw_rate c: " << command_.yaw_rate << std::endl;
-			std::cout << "Vyaw.c: " << Vyaw.c << std::endl;
-			std::cout << "yaw_stop_: " << yaw_stop_ << std::endl;
-			
+					
 		}
-		else
-		{
+		// Couldn't reach the server
+		else {
 			ROS_ERROR("Holodeck Frontend: Failed to call service state");
 		}
 
@@ -107,9 +102,20 @@ namespace holodeck {
 
 	void Frontend::implement_extensions() {
 
-
+		// convert the image to gray
 		cv::cvtColor(img_, grayImg_, cv::COLOR_BGR2GRAY);
-		controller_base_->implement_controller(grayImg_, state_, command_);
+
+		float command[4] = {0,0,0,0}; // Vx, Vy, yaw_rate, altitude
+
+		// implement the controller
+		controller_base_->implement_controller(grayImg_, state_, command);
+
+		if(!use_keyboard_) {
+			Vx.c = command[0];
+			Vy.c = command[1];
+			Vyaw.c = command[2];
+		}
+
 
 	}
 
@@ -117,9 +123,9 @@ namespace holodeck {
 
 
 		initscr();
-		cbreak(); //Disable buffering
-		noecho(); // supress echo
-		keypad(stdscr,TRUE); // adds special keystrokes like backspace, delete, and the arrow keys
+		cbreak();             // Disable buffering
+		noecho();             // supress echo
+		keypad(stdscr,TRUE);  // adds special keystrokes like backspace, delete, and the arrow keys
 		nodelay(stdscr,TRUE); // allows getch() to work in a non-blocking manner
 
 		ros::Rate loop_rate(30);
@@ -128,20 +134,15 @@ namespace holodeck {
 		{
 
 
+			int key_pressed;
+			while ( (key_pressed=getch()) != ERR ) {
+			// user hasn't responded. do nothing
 
-		  int key_pressed;
-		  while ( (key_pressed=getch()) != ERR ) {
-		    // user hasn't responded. do nothing
-
-		  	// std::cout << key_pressed << std::endl;
-
-		    handle_key_input(key_pressed);
-		  }
-		  
-		    
+				handle_key_input(key_pressed);
+			}
 		  
 
-
+		  // handle all callbacks
 		  ros::spinOnce();
 		  loop_rate.sleep();
 		}
@@ -157,7 +158,7 @@ namespace holodeck {
 
 			case key_w: { // increase altitude
 
-				command_.altitude += 1.0/30;
+				command_.altitude += 1.0/10;
 
 				break;
 			}
@@ -173,7 +174,7 @@ namespace holodeck {
 			}
 			case key_s: { // decrease altitude
 
-				command_.altitude -= 1.0/30;
+				command_.altitude -= 1.0/10;
 
 				if (command_.altitude < 0)
 					command_.altitude = 0;
@@ -202,6 +203,10 @@ namespace holodeck {
 			case key_c: { // change between publishing commands with keyboard and controller
 
 				use_keyboard_ = !use_keyboard_;
+
+				// publish command one more time
+				if(!use_keyboard_)
+					publish_command();
 
 				break;
 			}
@@ -268,12 +273,21 @@ namespace holodeck {
 
 void Frontend::pd_controller() {
 
+	// saturate commands
+	if (abs(Vx.c) > 5) {
+		Vx.c = copysign(5,Vx.c);
+	}
+	if (abs(Vy.c) > 4) {
+		Vy.c = copysign(4,Vy.c);
+	}
+
+
 
 	// calculate derivatives
 	Vx.dl = (state_.vel.x - Vx.prev) * frame_rate;
 	Vy.dl = (state_.vel.y - Vy.prev) * frame_rate;
 
-	// compute commands
+	// PD controller
 	command_.pitch = Vx.kp*(Vx.c - state_.vel.x) - Vx.dl*Vx.kd;
 
 	command_.roll = Vy.kp*(Vy.c-state_.vel.y) -Vy.dl*Vy.kd;
@@ -290,6 +304,11 @@ void Frontend::pd_controller() {
 	else
 		command_.yaw_rate = Vyaw.c;
 
+	// Saturate yaw command
+	if (abs(command_.yaw_rate) > 1) {
+		command_.yaw_rate = copysign(1,command_.yaw_rate);
+	}
+
 	// store previous value
 	Vx.prev = state_.vel.x;
 	Vy.prev = state_.vel.y;
@@ -299,12 +318,12 @@ void Frontend::pd_controller() {
 }
 
 
-void Frontend::rqt_reconfigure_callback(holodeck_controller::frontend &config, uint32_t level) {
+void Frontend::rqt_reconfigure_callback(holodeck_controller::frontendConfig &config, uint32_t level) {
 
 	// update gains
-	Vx.kp = config.pitch_kp;
-	Vx.kd = config.pitch_kd;
-
+	Vx.kp = -config.pitch_kp;
+	Vx.kd = -config.pitch_kd;
+	
 	Vy.kp = config.roll_kp;
 	Vy.kd = config.roll_kd;
 

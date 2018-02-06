@@ -13,7 +13,7 @@ namespace holodeck {
 
 		//This method receives an image and states, and computes commands
 
-		void implement_controller(const cv::Mat& img, const ros_holodeck::state state, ros_holodeck::command& command );
+		void implement_controller(const cv::Mat& img, const ros_holodeck::state state, float *command );
 
 	private:
 
@@ -37,7 +37,9 @@ namespace holodeck {
 
 		void compute_pixel_velocity();
 
-		void display_image(const cv::Mat& img);
+		void display_image(const cv::Mat& img, float *command);
+
+		void calculate_commands(const cv::Mat& img, float *command);
 
 	};
 
