@@ -6,6 +6,7 @@
 #include <ros_holodeck/state.h>
 #include <ros_holodeck/command.h>
 #include <stdlib.h> 
+#include <math.h>
 
 
 namespace holodeck {
