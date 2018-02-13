@@ -103,12 +103,13 @@ namespace holodeck {
 	void Frontend::implement_extensions() {
 
 		// convert the image to gray
-		cv::cvtColor(img_, grayImg_, cv::COLOR_BGR2GRAY);
+		// cv::cvtColor(img_, grayImg_, cv::COLOR_BGR2GRAY);
+
 
 		float command[4] = {0,0,0,0}; // Vx, Vy, yaw_rate, altitude
 
 		// implement the controller
-		controller_base_->implement_controller(grayImg_, state_, command);
+		controller_base_->implement_controller(img_, state_, command);
 
 		if(!use_keyboard_) {
 			Vx.c = command[0];

@@ -25,6 +25,8 @@ namespace holodeck {
 	///////////////////////////////////////////
 
 
+	enum ControllerStates {STOP, AVOID_OBSTACLE, CORRIDOR_BALANCE, MOVE_FORWARD, USER_CONTROL};
+
 	// This class computes the optical flow in different regions in order
 	// to navigate the coptor down the corridor and avoid obstacals. 
 	class ControllerOptFlow : public ControllerBase {
@@ -47,7 +49,8 @@ namespace holodeck {
 		float image_width_ = 512; // Image width in pixels
 		float image_height_ = 512; // Image height in pixels
 		float focal_length_ = image_width_/2;
-		float focal_length_2 = pow(focal_length_,2);
+		float focal_length_2 = powf(focal_length_,2);
+		bool first_image_ = true;
 		float frames_per_second_ = 30;
 
 		struct RegionOfInterest {
@@ -59,27 +62,35 @@ namespace holodeck {
 			int y_start, y_stop;                      // The y-direction ROI of the image
 			float count;                              // Number of good points matched
 			float sum, avg;                           // The total and average optical flow in a ROI
-		} left_wall_, right_wall_, left_center_, right_center_, bottom_;
+		} left_wall_, right_wall_, left_center_, right_center_, bottom_, center_;
 
 		float diff_wall_opt_flow_ = 0;
 		float diff_center_opt_flow_ = 0;  
 		float altitude_avg_ = 0;          // The height at which the coptor is flying  
 		float time_till_collision_avg_ = 0;
+		bool ttc_valid_ = false;
 
-		bool first_image_ = true;
+		ControllerStates controller_state_ = USER_CONTROL;
+		// ControllerStates prev_state_ = 10;
+		bool can_change_states_ = false;
+
+
+		int state_timer_ = 0;
+
+
 
 
 		// detect features on image
 		// void detect_features(const cv::Mat& img);
 
 		// compute the optical flow and keep only the good features
-		void compute_optical_flow(const cv::Mat& img);
+		void compute_optical_flow(const cv::Mat& img, const ros_holodeck::state state);
 
 		// Find corresponding points between the previous image and new image
 		void find_correspoinding_points(const cv::Mat& img,RegionOfInterest* roi);
 
 		// compute pixel velocity between good_points and matched_points
-		void compute_pixel_velocity(RegionOfInterest* roi);
+		void compute_pixel_velocity(RegionOfInterest* roi, const ros_holodeck::state state);
 
 		// Display optical Flow
 		void display_image(const cv::Mat& img, float *command);
