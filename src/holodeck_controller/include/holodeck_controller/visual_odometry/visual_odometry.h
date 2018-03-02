@@ -4,6 +4,7 @@
 #include <Eigen/Dense>
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/eigen.hpp>
+#include <iostream>
 
 
 
@@ -27,21 +28,18 @@ namespace holodeck {
 		float image_height_ = 512; // Image height in pixels
 		float focal_length_ = image_width_/2;
 
-		// Rotation, and Translation matrices
-		Eigen::Matrix<float,3,1> T_delta_;
-		Eigen::Matrix<float,3,3> R_delta_;
+		// Homogenous matrix between frames
+		Eigen::Matrix<float,4,4> G_delta_;
 
-		// State
-		Eigen::Matrix<float,3,1> position_;
-		Eigen::Matrix<float,3,3> attitude_;
+		// Homogenous matrix from world to current frame
+		Eigen::Matrix<float,4,4> G_w2c_;
 		bool state_init_;
 
 		// Map of where the drone has traveled
 		cv::Mat map_;
 		bool display_;
+		cv::Point2f pos_dl_; // Previous position
 
-		// Rotation
-		Eigen::Matrix<float,3,3> rot_cam2world_;
 
 		// Calculate the Essential Matrix, Relative Rotation and Translation from features
 		void calculate_relative_pose(const std::vector<cv::Point2f>& prev_features, std::vector<cv::Point2f>& new_features,  const ros_holodeck::state state); 
@@ -49,9 +47,10 @@ namespace holodeck {
 		// Update the sate
 		void update_state(const ros_holodeck::state state);
 
-		void display();
+		void display(const ros_holodeck::state state);
 
-		void draw_map();
+		// Draw the new position on the map
+		void draw_map(const ros_holodeck::state state);
 
 
 	};
