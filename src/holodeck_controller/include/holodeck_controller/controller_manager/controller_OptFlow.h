@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include "holodeck_controller/controller_manager/controller_base.h"
+#include "controller_manager/controller_base.h"
 
 namespace holodeck {
 

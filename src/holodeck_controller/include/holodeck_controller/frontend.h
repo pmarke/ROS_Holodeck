@@ -16,8 +16,11 @@
 #include <dynamic_reconfigure/server.h>
 
 // This project
-#include "holodeck_controller/controller_manager/controller_OptFlow.h"
-#include "holodeck_controller/controller_manager/controller_base.h"
+#include "controller_manager/controller_OptFlow.h"
+#include "controller_manager/controller_base.h"
+#include "visual_odometry/visual_odometry.h"
+#include "feature_manager/feature_manager.h"
+
 
 // other libraries
 #include <string>
@@ -98,6 +101,13 @@ namespace holodeck {
 		// Extenstions
 		// ControllerManager controller_manager_;
 		std::shared_ptr<ControllerBase> controller_base_;
+		VisualOdometry visual_odometry_;
+		FeatureManager feature_manager_;
+
+		// Used to indicate how many images to throw away
+		unsigned img_count_;
+		unsigned img_use_; // Throw out img_use_ out of img_use_+1 images
+
 
 
 		// Retrieve Holodeck Image
@@ -123,6 +133,8 @@ namespace holodeck {
 
 		// Update PD gains
 		void rqt_reconfigure_callback(holodeck_controller::frontendConfig &config, uint32_t level);
+
+		void implement_visual_odometry();
 
 	} ;
 

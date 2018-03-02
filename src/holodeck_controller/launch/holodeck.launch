@@ -31,7 +31,7 @@
 		<node pkg="rqt_image_view" type="rqt_image_view" name="rqt_image_view" />
 		
 
-	 	<node pkg="rqt_reconfigure" type="rqt_reconfigure" name="dynamic_reconfigure" />
+	 	<!-- <node pkg="rqt_reconfigure" type="rqt_reconfigure" name="dynamic_reconfigure" /> -->
 
 
 

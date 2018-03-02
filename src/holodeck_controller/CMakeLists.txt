@@ -124,7 +124,7 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 include_directories(
-include
+include/holodeck_controller
   ${catkin_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIR}
   ${OpenCV_INCLUDE_DIRS}
@@ -134,7 +134,12 @@ include
 add_executable(controller_node
 	src/node.cpp 
 	src/frontend.cpp
-  src/controller_manager/controller_OptFlow.cpp)
+  src/controller_manager/controller_OptFlow.cpp
+
+  src/visual_odometry/visual_odometry.cpp
+
+  src/feature_manager/feature_manager.cpp 
+  src/feature_manager/lk_matcher.cpp)
 
 target_link_libraries( controller_node 
 	${catkin_LIBRARIES} 

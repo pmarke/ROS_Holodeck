@@ -1,4 +1,4 @@
-#include "holodeck_controller/frontend.h"
+#include "frontend.h"
 
 
 namespace holodeck {
@@ -32,6 +32,9 @@ namespace holodeck {
 		Vyaw.prev = 0;
 		yaw_stop_ = 0;
 
+		img_count_ = 0;
+		img_use_   = 4;
+
 
 		keyboard_input();
 
@@ -52,16 +55,16 @@ namespace holodeck {
 		// Get the states
 		service_state();
 
-		implement_extensions();
+		implement_visual_odometry();
 
-		if (!use_keyboard_) {
+		// if (!use_keyboard_) {
 
 			// Implement extensions
 			// implement_extensions();
 
 			// publish commands
-			publish_command();
-		}
+			// publish_command();
+		// }
 
 
 	}
@@ -119,6 +122,22 @@ namespace holodeck {
 
 
 	}
+
+	void Frontend::implement_visual_odometry() {
+
+		if (img_count_++ % img_use_ == 0) {
+			feature_manager_.find_correspoinding_features(img_);
+		
+
+			if (feature_manager_.matched_features_.size() > 0) {
+
+				visual_odometry_.implement_visual_odometry( feature_manager_.prev_features_, feature_manager_.matched_features_, state_);
+
+			}
+		}
+
+	}
+
 
 	void Frontend::keyboard_input() {
 

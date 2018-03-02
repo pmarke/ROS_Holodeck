@@ -1,4 +1,4 @@
-#include "holodeck_controller/frontend.h"
+#include "frontend.h"
 
 int main(int argc, char** argv){
 	// start node
