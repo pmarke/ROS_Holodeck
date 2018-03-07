@@ -13,6 +13,8 @@ namespace holodeck {
 		sub_video_ = it.subscribe("video", 10, &Frontend::callback_sub_video,this,image_transport::TransportHints("raw"));
 		command_pub_ = nh_.advertise<ros_holodeck::command>("command",1);
 		srv_state_ = nh_.serviceClient<ros_holodeck::state_srv>("state");
+		keyboard_sub_ = nh_.subscribe("keyboard_input",1, &Frontend::handle_key_input, this);
+		keyboard_srv_ = nh_.serviceClient<keyboard_input::instructions>("display_instructions");
 
 		controller_base_ = std::make_shared<ControllerOptFlow>();
 
@@ -30,13 +32,35 @@ namespace holodeck {
 
 		Vyaw.c = 0;
 		Vyaw.prev = 0;
+		Vyaw.dl = 0;
 		yaw_stop_ = 0;
 
 		img_count_ = 0;
 		img_use_   = 4;
 
 
-		keyboard_input();
+		// Wait for keyboard service
+		while (!keyboard_srv_.exists()) {
+			ROS_INFO_STREAM_ONCE("Waiting for keyboard service \n");
+		}
+
+		// Print instructions
+		keyboard_input::instructions msg;
+		msg.request.instructions = "           Controls \n\r" 
+								   "------------------------------\n\r"
+								   "Increase Pitch:       up arrow \n\r"
+								   "Decrease Pitch:       down arrow \n\r"
+								   "Increase Roll:        left arrow \n\r"
+								   "Decrease Roll:        right arrow \n\r"
+								   "Increase Yaw Rate:    d \n\r"
+								   "Decrease Yaw Rate:    a \n\r"
+								   "Increase Altitude:    w \n\r"
+								   "Decrease Altitude:    s \n\r"
+								   "Reset Commands to 0:  space bar \n\r"
+								   "Reset Holocked:       r \n\r"
+								   "Change Command Input: c \n\r";
+		keyboard_srv_.call(msg);
+
 
 	}
 
@@ -139,42 +163,14 @@ namespace holodeck {
 	}
 
 
-	void Frontend::keyboard_input() {
 
+	void Frontend::handle_key_input(const keyboard_input::keyboard& msg) {
 
-		initscr();
-		cbreak();             // Disable buffering
-		noecho();             // supress echo
-		keypad(stdscr,TRUE);  // adds special keystrokes like backspace, delete, and the arrow keys
-		nodelay(stdscr,TRUE); // allows getch() to work in a non-blocking manner
-
-		ros::Rate loop_rate(30);
-
-		while(ros::ok())
-		{
-
-
-			int key_pressed;
-			while ( (key_pressed=getch()) != ERR ) {
-			// user hasn't responded. do nothing
-
-				handle_key_input(key_pressed);
-			}
-		  
-
-		  // handle all callbacks
-		  ros::spinOnce();
-		  loop_rate.sleep();
-		}
-
-	}
-
-	void Frontend::handle_key_input(int key_pressed) {
 
 		command_.reset = false;
 
 
-		switch(key_pressed) {
+		switch(msg.key_pressed) {
 
 			case key_w: { // increase altitude
 
@@ -280,7 +276,7 @@ namespace holodeck {
 			}
 			default: {
 
-				ROS_WARN("Key: %i not recognized\n", key_pressed);
+				ROS_WARN_STREAM("Key: " << msg.key_pressed << " not recognized." << std::endl);
 
 				break;
 			}
@@ -317,6 +313,14 @@ void Frontend::pd_controller() {
 	}
 
 	if (Vyaw.c == 0) {
+
+		if (yaw_stop_ - state_.yaw > PI) {
+
+			yaw_stop_ = yaw_stop_ + 2*PI*std::copysign(1,yaw_stop_ - state_.yaw );
+			std::cout << "yaw_stop_: " << yaw_stop_ << "\r" << std::endl;
+			std::cout << "state_.yaw: " << state_.yaw <<  "\r" << std::endl;
+			std::cout << "diff: " << yaw_stop_ - state_.yaw <<  "\r" << std::endl;
+		}
 
 		command_.yaw_rate = Vyaw.kp*(yaw_stop_ - state_.yaw) - Vyaw.dl*Vyaw.kd;
 

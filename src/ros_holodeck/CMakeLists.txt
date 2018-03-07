@@ -15,6 +15,7 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   cv_bridge
   image_transport
+  keyboard_input
 )
 
 find_package(Eigen3 REQUIRED)

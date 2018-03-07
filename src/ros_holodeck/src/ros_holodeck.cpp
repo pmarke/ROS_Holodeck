@@ -13,7 +13,7 @@ ROSHolodeck::ROSHolodeck() {
 	// state publisher
 	state_srv_ = nh_.advertiseService("state",&ROSHolodeck::service_state,this);
 
-	// image publisher
+		// image publisher
 	image_transport::ImageTransport it(nh_);
 	pub_video_ = it.advertise("image",10);
 
@@ -85,15 +85,15 @@ bool ROSHolodeck::service_state(ros_holodeck::state_srv::Request& req, ros_holod
 	state_.imu.gyro_y  = imu_(4);
 	state_.imu.gyro_z  = imu_(5);
 
-	// position : convert from cm to meters
-	state_.position.x = location_(0)/100;
-	state_.position.y = location_(1)/100;
-	state_.position.z = location_(2)/100;
+	// position : 
+	state_.position.x = location_(0);
+	state_.position.y = location_(1);
+	state_.position.z = location_(2);
 
-	// velocity : convert from cm/s to m/s
-	state_.velocity.x = velocity_(0)/100;
-	state_.velocity.y = velocity_(1)/100;
-	state_.velocity.z = velocity_(2)/100;
+	// velocity : 
+	state_.velocity.x = velocity_(0);
+	state_.velocity.y = velocity_(1);
+	state_.velocity.z = velocity_(2);
 
 	// time
 	state_.header.stamp = ros::Time::now();
@@ -112,10 +112,10 @@ bool ROSHolodeck::service_state(ros_holodeck::state_srv::Request& req, ros_holod
 	// get the velocity in vehicle 1 frame
 	Eigen::Vector3f vel = rot*velocity_.transpose();
 
-	// convert from cm/s to m/s
-	state_.vel.x = vel(0)/100;
-	state_.vel.y = vel(1)/100;
-	state_.vel.z = vel(2)/100;
+	// pack up the velocities
+	state_.vel.x = vel(0);
+	state_.vel.y = vel(1);
+	state_.vel.z = vel(2);
 
 
 	res.state = state_;

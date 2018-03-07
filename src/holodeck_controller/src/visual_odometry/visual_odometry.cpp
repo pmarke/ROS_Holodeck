@@ -84,7 +84,7 @@ void VisualOdometry::calculate_relative_pose(const std::vector<cv::Point2f>& pre
 
 	// Scale T_norm
 	// T_ = v_mag * Ts * T_norm
-	T= v_mag * T / frame_rate_*3;
+	T= v_mag * T / frame_rate_*2.5;
 
 	// Compose homogenous matrix 
 	// This maps points in frame old into frame new
@@ -152,7 +152,7 @@ void VisualOdometry::draw_map(const ros_holodeck::state state) {
 
 	std::stringstream true_pose;
 	true_pose << std::setprecision(2) << "True:      (" << state.position.x <<"," << state.position.y << ","<< state.position.z <<")" ;
-	cv::rectangle(map_, cv::Point(0,0), cv::Point(200,45), cv::Scalar(0,0,0), CV_FILLED);
+	cv::rectangle(map_, cv::Point(0,0), cv::Point(300,45), cv::Scalar(0,0,0), CV_FILLED);
 	cv::putText(map_,estimated_pose.str(), cv::Point(0,15), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255,255,255));
 	cv::putText(map_,true_pose.str(), cv::Point(0,30), cv::FONT_HERSHEY_SIMPLEX, 0.4, cv::Scalar(255,255,255));
 

@@ -21,6 +21,9 @@
 #include "visual_odometry/visual_odometry.h"
 #include "feature_manager/feature_manager.h"
 
+// Keyboard Input
+#include "keyboard_input/keyboard.h"
+#include "keyboard_input/instructions.h"
 
 // other libraries
 #include <string>
@@ -47,7 +50,7 @@ namespace holodeck {
 	static const int key_arrow_left = 260;
 	static const int key_arrow_right = 261;
 
-	static const float PI = 3.14159;
+	static const float PI = 3.1415926535897;
 
 // frame rate
 	static const float frame_rate = 30;
@@ -68,6 +71,8 @@ namespace holodeck {
 		image_transport::Publisher pub_video_;
 		ros::Publisher command_pub_;
 		ros::ServiceClient srv_state_;
+		ros::Subscriber keyboard_sub_;
+		ros::ServiceClient keyboard_srv_;
 
 
 		// ROS_holodeck interface
@@ -122,10 +127,7 @@ namespace holodeck {
 		// implement controller
 		void implement_extensions();
 
-		// get input from the keyboard
-		void keyboard_input();
-
-		void handle_key_input(int key_pressed);
+		void handle_key_input(const keyboard_input::keyboard& msg);
 
 		// PD velocity controller. 
 		// Calculates desired roll, pitch, and yaw_rate
