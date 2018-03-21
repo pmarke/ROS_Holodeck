@@ -89,6 +89,9 @@ namespace holodeck {
 		cv::Mat grayImg_;
 		cv::Mat alteredImg_;
 
+		// Camera matrix
+		cv::Mat projMatr_;
+
 		// PD controller
 		struct PD_Controller {
 			float kp;    // proportional gain

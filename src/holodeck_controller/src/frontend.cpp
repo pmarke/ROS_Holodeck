@@ -61,6 +61,19 @@ namespace holodeck {
 								   "Change Command Input: c \n\r";
 		keyboard_srv_.call(msg);
 
+		// Camera matrix
+		projMatr_ = cv::Mat(3,3,CV_64FC1);
+		projMatr_.at<double>(0,0) = 512/2;
+		projMatr_.at<double>(0,1) = 0;
+		projMatr_.at<double>(0,2) = 512/2;
+		projMatr_.at<double>(1,0) = 0;
+		projMatr_.at<double>(1,1) = 512/2;
+		projMatr_.at<double>(1,2) = 512/2;
+		projMatr_.at<double>(2,0) = 0;
+		projMatr_.at<double>(2,1) = 0;
+		projMatr_.at<double>(2,2) = 1;
+
+		std::cout << "Camera matrix" << std::endl << projMatr_ << std::endl;
 
 	}
 
@@ -155,7 +168,7 @@ namespace holodeck {
 
 			if (feature_manager_.matched_features_.size() > 0) {
 
-				visual_odometry_.implement_visual_odometry( feature_manager_.prev_features_, feature_manager_.matched_features_, state_);
+				visual_odometry_.implement_visual_odometry(projMatr_, feature_manager_.prev_features_, feature_manager_.matched_features_, state_);
 
 			}
 		}
